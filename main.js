@@ -79,6 +79,9 @@ function renderCards (cardsData) {
 }
 
 
+// ------------------
+
+
 // Card details pages
 const cardDetailsPageTemplate = (props) => {
   // These elements are injected into a div.method-page in the renderDetailsPages() function
@@ -125,7 +128,7 @@ document.getElementById('page-container').addEventListener('click', ()=>{
 })
 
 
-// Show the proper page when url changes
+// Show the proper page when url changes (this is what makes tha modal appear)
 window.addEventListener('hashchange', ()=>{
   document.getElementById('page-container').hidden = false
 
