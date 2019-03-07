@@ -1,5 +1,5 @@
 html {
-  padding: 50px;
+  padding: 40px;
 }
 
 body {
@@ -60,13 +60,13 @@ body {
 
 /* Media queries for smaller devices */
 
-@media screen and (max-width: 720px) {
+@media screen and (max-width: 840px) {
   .cards-container {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media screen and (max-width: 530px) {
+@media screen and (max-width: 560px) {
   .cards-container {
     grid-template-columns: 1fr;
   }
