@@ -49,7 +49,7 @@ const cardTemplate = (props) => {
     </div>
 
     <div class="img-container">
-      <img src="${props.imageUrl}" class="card-image">
+      <img src="${props.imageUrl}?h=500" class="card-image">
     </div>
   `)
 }
