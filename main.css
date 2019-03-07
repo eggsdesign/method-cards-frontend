@@ -1,0 +1,33 @@
+html {
+    padding: 50px;
+  }
+  
+  body {
+    max-width: 1000px;
+    margin: 0 auto;
+    font-family: 'Lato', sans-serif;
+  }
+  
+  .cards-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 20px;
+  }
+  
+  .card {
+    border: 3px solid black;
+  }
+  
+  .card-text {
+    padding: 20px;
+  }
+  
+  .img-container {
+    height: 250px;
+  }
+  
+  .card-image {
+    width: 100%;
+    object-fit: cover;
+    object-position: bottom;
+  }
