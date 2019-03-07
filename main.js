@@ -1,15 +1,18 @@
 const cardTemplate = (props) => {
   return (`
-      <div class="card">
-        <div class=card-text>
-            <h2 class="card-title">${props.title}</h2>
-            <p class="card-subtext">${props.subtext}</p>
-        </div>
-        <div class="img-container">
-            <img src="${props.imgurl}" class="card-image">
-         </div>
+    <div class="card">
+
+      <div class=card-text>
+        <h2 class="card-title">${props.title}</h2>
+        <p class="card-subtext">${props.subtext}</p>
+      </div>
+
+      <div class="img-container">
+        <img src="${props.imgurl}" class="card-image">
+      </div>
+
     </div>
-      `)
+  `)
 }
 
 // Our hand made data array. Could also be data from third party or whatever.
