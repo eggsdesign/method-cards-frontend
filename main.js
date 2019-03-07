@@ -5,6 +5,7 @@ const cardTemplate = (props) => {
     <div class="card">
 
       <div class=card-text>
+        <span class="card-phase">${props.phase}</span>
         <h2 class="card-title">${props.title}</h2>
         <p class="card-subtext">${props.subtitle}</p>
       </div>
@@ -27,8 +28,10 @@ var client = window.SanityClient({
 
 // Fetch all documents of type method. "..." means get all content in the method object. The following stuff makes sure we also fetch referenced files to get the image urls
 var query = `*[_type=="method"]{
-  ...,
-  "imageUrl": image.asset->url}`
+  ..., 
+  "imageUrl": image.asset->url, 
+  "phase": phase->phaseTitle
+}`
 
 
 client

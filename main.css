@@ -1,41 +1,73 @@
 html {
-    padding: 50px;
-  }
+  padding: 50px;
+}
+
+body {
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: 'Graphik', 'Lato', sans-serif;
+}
+
+.page-header {
+  margin-bottom: 40px;
+}
+
+.page-header-title {
+  font-size: 40px;
+  margin-top: 0px;
+}
+
+.page-header-description {
+  font-size: 18px;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-gap: 30px;
+}
+
+.card {
+  border: 3px solid black;
   
-  body {
-    max-width: 1000px;
-    margin: 0 auto;
-    font-family: 'Lato', sans-serif;
-  }
-  
+  /* To make image stick to bottom */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-title {
+  margin-top: 0;
+}
+
+.card-text {
+  padding: 20px;
+}
+
+.img-container {
+  height: 250px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: bottom;
+}
+
+
+/* Media queries for smaller devices */
+
+@media screen and (max-width: 720px) {
   .cards-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-gap: 20px;
+    grid-template-columns: 1fr 1fr;
   }
-  
-  .card {
-    border: 3px solid black;
-    
-    /* To make image stick to bottom */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+}
+
+@media screen and (max-width: 530px) {
+  .cards-container {
+    grid-template-columns: 1fr;
   }
-  
-  .card-text {
-    padding: 20px;
-  }
-  
-  .img-container {
-    height: 250px;
-    overflow: hidden;
-    width: 100%;
-  }
-  
-  .card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: bottom;
-  }
+}
