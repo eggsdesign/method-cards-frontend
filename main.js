@@ -21,7 +21,7 @@ const cardTemplate = (props) => {
 var client = window.SanityClient({
   projectId: SANITY_PROJECT_ID,
   dataset: 'production',
-  useCDN: true
+  useCdn: true
 })
 
 
