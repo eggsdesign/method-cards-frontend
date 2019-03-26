@@ -90,13 +90,24 @@ const cardDetailsPageTemplate = (props) => {
     blocks: props.description
   })
 
+  const instruction = blocksToHtml({
+    blocks: props.instruction
+  })
+
   // These elements are injected into a div.method-page in the renderDetailsPages() function
   return (`
     <div class="method-page">
       <span>${props.phase}</span>
       <h1>${props.title}</h1>
       <p>${props.subtitle}</p>
-      <div>${description}</div>
+      <div>
+        <h2>When to use it</h2>
+        ${description}
+      </div>
+      <div>
+        <h2>How to use it</h2>
+        ${instruction}
+      </div>
     </div>
   `)
 }
