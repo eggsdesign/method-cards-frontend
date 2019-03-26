@@ -1,3 +1,4 @@
+import blocksToHtml from '@sanity/block-content-to-html'
 const SANITY_PROJECT_ID = 'r1vilzq1'
 
 
@@ -84,12 +85,18 @@ function renderCards (cardsData) {
 
 // Card details pages
 const cardDetailsPageTemplate = (props) => {
+  console.log(props)
+  const description = blocksToHtml({
+    blocks: props.description
+  })
+
   // These elements are injected into a div.method-page in the renderDetailsPages() function
   return (`
     <div class="method-page">
       <span>${props.phase}</span>
       <h1>${props.title}</h1>
       <p>${props.subtitle}</p>
+      <div>${description}</div>
     </div>
   `)
 }
