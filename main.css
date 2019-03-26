@@ -71,6 +71,7 @@ body {
   left: 0;
   right: 0;
   background: rgba(0,0,0,0.5);
+  overflow: scroll;
 }
 
 .method-page {
@@ -82,7 +83,9 @@ body {
 
 }
 
-
+.method-page-img {
+  max-height: 200px;
+}
 
 /* Media queries for smaller devices */
 
