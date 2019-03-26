@@ -13,6 +13,6 @@
   },
   "scripts": {
     "start": "parcel start ./index.html",
-    "deploy": "parcel build ./index.html --public-url './method-cards-frontend/' && gh-pages -d dist"
+    "deploy": "parcel build ./index.html --public-url 'https://eggsdesign.github.io/method-cards-frontend/' && gh-pages -d dist"
   }
 }
