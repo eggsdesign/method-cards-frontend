@@ -135,7 +135,8 @@ function renderDetailsPages (cardsData) {
 
 
 // When deselecting a page, ie clicking outside of the modal, hide the overlay
-document.getElementById('page-container').addEventListener('click', ()=>{
+document.getElementById('page-container').addEventListener('click', (event)=>{
+  event.stopPropagation()
   document.getElementById('page-container').hidden = true
 
   for (let page of Object.entries(window.methodDetailsPages)){
