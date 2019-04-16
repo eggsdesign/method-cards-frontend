@@ -85,7 +85,6 @@ function renderCards (cardsData) {
 
 // Card details pages
 const cardDetailsPageTemplate = (props) => {
-  console.log(props)
   const description = blocksToHtml({
     blocks: props.description
   })
@@ -135,15 +134,17 @@ function renderDetailsPages (cardsData) {
 
 
 // When deselecting a page, ie clicking outside of the modal, hide the overlay
-document.getElementById('page-container').addEventListener('click', (event)=>{
-  event.stopPropagation()
-  document.getElementById('page-container').hidden = true
+document.getElementById('page-container').addEventListener('click', (e)=>{
+  
+  if (e.path[0].id == 'page-container'){
+    document.getElementById('page-container').hidden = true
 
-  for (let page of Object.entries(window.methodDetailsPages)){
-    page[1].hidden = true
+    for (let page of Object.entries(window.methodDetailsPages)){
+      page[1].hidden = true
+    }
+
+    history.replaceState(null, null, ' ');
   }
-
-  history.replaceState(null, null, ' ');
 })
 
 
@@ -152,7 +153,6 @@ window.addEventListener('hashchange', ()=>{
   document.getElementById('page-container').hidden = false
 
   let pageId = window.location.hash.substring(1)
-  console.log(pageId)
   window.methodDetailsPages[pageId].hidden = false
 })
 
