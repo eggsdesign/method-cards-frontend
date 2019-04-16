@@ -1,18 +1,17 @@
 {
   "name": "method-cards-frontend",
   "version": "1.0.0",
-  "main": "index.html",
-  "repository": "https://github.com/eggsdesign/method-cards-frontend",
-  "author": "caterina.forno@eggsdesign.com",
+  "main": "index.js",
+  "repository": "https://github.com/eggsdesign/method-cards-frontend.git",
   "license": "MIT",
   "dependencies": {
-    "@sanity/block-content-to-html": "^1.3.8",
-    "@sanity/block-tools": "^0.140.9",
-    "gh-pages": "^2.0.1",
-    "parcel": "^1.12.3"
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.3"
   },
   "scripts": {
-    "start": "parcel start ./index.html",
-    "deploy": "parcel build ./index.html --public-url 'https://eggsdesign.github.io/method-cards-frontend/' && gh-pages -d dist"
+    "start": "parcel src/index.html"
   }
 }
