@@ -78,6 +78,7 @@ function renderCards (cardsData) {
     // Handle clicks on cards
     card.addEventListener('click', (event)=>{
       window.location.hash = dataEntry._id
+      document.body.style.overflow = 'hidden';
     })
   })
 
@@ -147,6 +148,9 @@ const cardDetailsPageTemplate = (props) => {
         <h2>How to use it</h2>
         ${instruction}
       </div>
+      <div class="img-container">
+        <img src="${props.imageUrl}?h=500" class="card-image">
+      </div>
     </div>
   `)
 }
@@ -175,7 +179,7 @@ function renderDetailsPages (cardsData) {
 
 // When deselecting a page, ie clicking outside of the modal, hide the overlay
 document.getElementById('page-container').addEventListener('click', (e)=>{
-
+  document.body.style.overflow = 'auto';
   if (e.path[0].id == 'page-container'){
     document.getElementById('page-container').hidden = true
 
@@ -191,7 +195,6 @@ document.getElementById('page-container').addEventListener('click', (e)=>{
 // Show the proper page when url changes (this is what makes tha modal appear)
 window.addEventListener('hashchange', ()=>{
   document.getElementById('page-container').hidden = false
-
   let pageId = window.location.hash.substring(1)
   window.methodDetailsPages[pageId].hidden = false
 })
