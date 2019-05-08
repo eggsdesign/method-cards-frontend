@@ -84,7 +84,17 @@ body {
   background: white;
   border-radius: 4px;
   padding: 40px;
+}
 
+.method-page ul {
+  list-style: none;
+  padding-left: 0;
+  line-height: 2rem;
+}
+
+.method-page ol {
+  padding-left: 1rem;
+  line-height: 2rem;
 }
 
 .method-page-img {

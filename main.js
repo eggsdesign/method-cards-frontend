@@ -135,7 +135,7 @@ const cardDetailsPageTemplate = (props) => {
 
   // These elements are injected into a div.method-page in the renderDetailsPages() function
   return (`
-    <div class="method-page">
+    <div class="method-page-inner">
       <span>${props.phase}</span>
       <h1>${props.title}</h1>
       <p>${props.subtitle}</p>
