@@ -1,4 +1,5 @@
 import blocksToHtml from '@sanity/block-content-to-html'
+import { createInflateRaw } from 'zlib';
 const SANITY_PROJECT_ID = 'r1vilzq1'
 
 
@@ -25,25 +26,81 @@ client
   .then(renderPageContent) // Send received data into renderCards function
   .catch(()=>{ console.log("Error!") }) // ...but if data fetch fails, do this
 
-const GLOBALS = {
-  cards: []
+let GLOBALS = {
+  cards: [],
+  phases: ['All'],
+  activePhaseFilter: 'All'
 }
 
-function renderPageContent(cardsData){
-  GLOBALS.cards = cardsData
+function renderPageContent(cardsData) {
+  createGlobals(cardsData)
+  renderFilter()
   renderCards(cardsData)
   renderDetailsPages(cardsData)
 }
 
 // END of SERVER COMMUNICATION ---------------------------------------------------------
 
+// Some setup
 
+function createGlobals(cardsData) {
+  GLOBALS.cards = cardsData
+  GLOBALS.cards.map(card => {
+    if (GLOBALS.phases.indexOf(card.phase) < 0) {
+      GLOBALS.phases.push(card.phase)
+    }
+  })
+}
 
 
 
 
 
 // PAGE RENDERING ----------------------------------------------------------------------
+
+const filterTemplate = (props) => {
+  return (`
+    <button data-phase="${props}">
+      ${props}
+    </button>
+  `)
+}
+
+function renderFilter() {
+  let filter = document.createElement('div')
+  filter.classList.add('filter-container')
+  GLOBALS.phases.map(phase => {
+    let button = document.createElement('div');
+    button.classList.add('filter-button')
+    button.innerHTML = filterTemplate(phase)
+    button.addEventListener('click', setPhaseFilter)
+    filter.append(button)
+  })
+  document.getElementById('filter').append(filter)
+}
+
+function setPhaseFilter(event) {
+  if (event.target.dataset['phase'] === GLOBALS.activePhaseFilter) return
+
+  GLOBALS.activePhaseFilter = event.target.dataset['phase']
+
+  // Remove cards before adding new
+  var cardsContainer = document.getElementById('cards');
+  while (cardsContainer.firstChild) {
+    cardsContainer.removeChild(cardsContainer.firstChild);
+  }
+
+  if (GLOBALS.activePhaseFilter === 'All') {
+    renderCards(GLOBALS.cards)
+  } else {
+    let filteredCards = GLOBALS.cards.filter(card => {
+      return card.phase === GLOBALS.activePhaseFilter
+    })
+    GLOBALS.filteredCards = filteredCards
+    renderCards(GLOBALS.filteredCards)
+  }
+
+}
 
 const cardTemplate = (props) => {
   return (`
@@ -89,15 +146,17 @@ function renderCards (cardsData) {
 window.addEventListener('keyup', event => {
   if (!window.location.hash) return false
 
+  let cardList = (GLOBALS.activePhaseFilter !== 'All')? GLOBALS.filteredCards : GLOBALS.cards
+  console.log(cardList)
   let currentId = window.location.hash.substr(1)
   let currentCard = document.querySelectorAll(`[data-hash='${currentId}']`)[0]
   let currentKey = parseInt(currentCard.dataset['key'])
   let previous, next
 
   if (currentKey === 0) {
-    previous = GLOBALS.cards.length - 1
+    previous = cardList.length - 1
     next = currentKey + 1
-  } else if (currentKey === GLOBALS.cards.length - 1) {
+  } else if (currentKey === cardList.length - 1) {
     previous = currentKey - 1
     next = 0
   } else {
@@ -111,11 +170,11 @@ window.addEventListener('keyup', event => {
 
   switch (event.which) {
     case 39:
-      window.location.hash = GLOBALS.cards[next]._id
+      window.location.hash = cardList[next]._id
       // Next card
       break
     case 37:
-      window.location.hash = GLOBALS.cards[previous]._id
+      window.location.hash = cardList[previous]._id
       // Previous card
       break
   }

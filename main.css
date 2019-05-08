@@ -21,6 +21,28 @@ body {
   font-size: 18px;
 }
 
+/* FILTER */
+.filter-container {
+  display: flex;
+  margin: 1rem 0;
+}
+
+.filter-container .filter-button button {
+  border: 1px solid #ddd;
+  background: transparent;
+  padding: 1rem;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.filter-container .filter-button button:hover {
+  box-shadow: 0 3px 0 0 #8a8989;
+}
+
+.filter-container .filter-button button:active {
+  box-shadow: 3px 3px 4px 0px inset #8a8989;
+}
+
 .cards-container {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
