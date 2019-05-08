@@ -147,7 +147,6 @@ window.addEventListener('keyup', event => {
   if (!window.location.hash) return false
 
   let cardList = (GLOBALS.activePhaseFilter !== 'All')? GLOBALS.filteredCards : GLOBALS.cards
-  console.log(cardList)
   let currentId = window.location.hash.substr(1)
   let currentCard = document.querySelectorAll(`[data-hash='${currentId}']`)[0]
   let currentKey = parseInt(currentCard.dataset['key'])
