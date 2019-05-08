@@ -14,8 +14,8 @@ var client = window.SanityClient({
 
 // Fetch all documents of type method. "..." means get all content in the method object. The following stuff makes sure we also fetch referenced files to get the image urls
 var query = `*[_type=="method"]{
-  ..., 
-  "imageUrl": image.asset->url, 
+  ...,
+  "imageUrl": image.asset->url,
   "phase": phase->phaseTitle
 }`
 
@@ -25,8 +25,12 @@ client
   .then(renderPageContent) // Send received data into renderCards function
   .catch(()=>{ console.log("Error!") }) // ...but if data fetch fails, do this
 
+const GLOBALS = {
+  cards: []
+}
 
 function renderPageContent(cardsData){
+  GLOBALS.cards = cardsData
   renderCards(cardsData)
   renderDetailsPages(cardsData)
 }
@@ -63,10 +67,12 @@ function renderCards (cardsData) {
   cardList.classList.add("cards-container")
 
   // Step through all entries in the 'data' array, generate html-elements and append to cardList container element
-  cardsData.map((dataEntry) => {
+  cardsData.map((dataEntry, key) => {
     let card = document.createElement('div')
     card.classList.add('card')
     card.innerHTML = cardTemplate(dataEntry)
+    card.dataset['key'] = key
+    card.dataset['hash'] = dataEntry._id
     cardList.append(card)
 
     // Handle clicks on cards
@@ -79,6 +85,40 @@ function renderCards (cardsData) {
   document.getElementById('cards').append(cardList)
 }
 
+window.addEventListener('keyup', event => {
+  if (!window.location.hash) return false
+
+  let currentId = window.location.hash.substr(1)
+  let currentCard = document.querySelectorAll(`[data-hash='${currentId}']`)[0]
+  let currentKey = parseInt(currentCard.dataset['key'])
+  let previous, next
+
+  if (currentKey === 0) {
+    previous = GLOBALS.cards.length - 1
+    next = currentKey + 1
+  } else if (currentKey === GLOBALS.cards.length - 1) {
+    previous = currentKey - 1
+    next = 0
+  } else {
+    previous = currentKey - 1
+    next = currentKey + 1
+  }
+
+  for (let page of Object.entries(window.methodDetailsPages)){
+    page[1].hidden = true
+  }
+
+  switch (event.which) {
+    case 39:
+      window.location.hash = GLOBALS.cards[next]._id
+      // Next card
+      break
+    case 37:
+      window.location.hash = GLOBALS.cards[previous]._id
+      // Previous card
+      break
+  }
+})
 
 // ------------------
 
@@ -135,7 +175,7 @@ function renderDetailsPages (cardsData) {
 
 // When deselecting a page, ie clicking outside of the modal, hide the overlay
 document.getElementById('page-container').addEventListener('click', (e)=>{
-  
+
   if (e.path[0].id == 'page-container'){
     document.getElementById('page-container').hidden = true
 

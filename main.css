@@ -31,7 +31,7 @@ body {
   border: 3px solid #ddd;
   cursor: pointer;
   transition: 0.1s;
-  
+
   /* To make image stick to bottom */
   display: flex;
   flex-direction: column;
@@ -48,12 +48,16 @@ body {
 
 .card-text {
   padding: 20px;
+  /* make sure js catches the card clicked and not text or image */
+  pointer-events: none;
 }
 
 .img-container {
   height: 250px;
   overflow: hidden;
   width: 100%;
+  /* make sure js catches the card clicked and not text or image */
+  pointer-events: none;
 }
 
 .card-image {
