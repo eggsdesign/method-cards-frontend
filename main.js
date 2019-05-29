@@ -1,4 +1,5 @@
 import blocksToHtml from '@sanity/block-content-to-html'
+import { createInflateRaw } from 'zlib';
 const SANITY_PROJECT_ID = 'r1vilzq1'
 
 
@@ -14,8 +15,8 @@ var client = window.SanityClient({
 
 // Fetch all documents of type method. "..." means get all content in the method object. The following stuff makes sure we also fetch referenced files to get the image urls
 var query = `*[_type=="method"]{
-  ..., 
-  "imageUrl": image.asset->url, 
+  ...,
+  "imageUrl": image.asset->url,
   "phase": phase->phaseTitle
 }`
 
@@ -25,21 +26,81 @@ client
   .then(renderPageContent) // Send received data into renderCards function
   .catch(()=>{ console.log("Error!") }) // ...but if data fetch fails, do this
 
+let GLOBALS = {
+  cards: [],
+  phases: ['All'],
+  activePhaseFilter: 'All'
+}
 
-function renderPageContent(cardsData){
+function renderPageContent(cardsData) {
+  createGlobals(cardsData)
+  renderFilter()
   renderCards(cardsData)
   renderDetailsPages(cardsData)
 }
 
 // END of SERVER COMMUNICATION ---------------------------------------------------------
 
+// Some setup
 
+function createGlobals(cardsData) {
+  GLOBALS.cards = cardsData
+  GLOBALS.cards.map(card => {
+    if (GLOBALS.phases.indexOf(card.phase) < 0) {
+      GLOBALS.phases.push(card.phase)
+    }
+  })
+}
 
 
 
 
 
 // PAGE RENDERING ----------------------------------------------------------------------
+
+const filterTemplate = (props) => {
+  return (`
+    <button data-phase="${props}">
+      ${props}
+    </button>
+  `)
+}
+
+function renderFilter() {
+  let filter = document.createElement('div')
+  filter.classList.add('filter-container')
+  GLOBALS.phases.map(phase => {
+    let button = document.createElement('div');
+    button.classList.add('filter-button')
+    button.innerHTML = filterTemplate(phase)
+    button.addEventListener('click', setPhaseFilter)
+    filter.append(button)
+  })
+  document.getElementById('filter').append(filter)
+}
+
+function setPhaseFilter(event) {
+  if (event.target.dataset['phase'] === GLOBALS.activePhaseFilter) return
+
+  GLOBALS.activePhaseFilter = event.target.dataset['phase']
+
+  // Remove cards before adding new
+  var cardsContainer = document.getElementById('cards');
+  while (cardsContainer.firstChild) {
+    cardsContainer.removeChild(cardsContainer.firstChild);
+  }
+
+  if (GLOBALS.activePhaseFilter === 'All') {
+    renderCards(GLOBALS.cards)
+  } else {
+    let filteredCards = GLOBALS.cards.filter(card => {
+      return card.phase === GLOBALS.activePhaseFilter
+    })
+    GLOBALS.filteredCards = filteredCards
+    renderCards(GLOBALS.filteredCards)
+  }
+
+}
 
 const cardTemplate = (props) => {
   return (`
@@ -63,15 +124,18 @@ function renderCards (cardsData) {
   cardList.classList.add("cards-container")
 
   // Step through all entries in the 'data' array, generate html-elements and append to cardList container element
-  cardsData.map((dataEntry) => {
+  cardsData.map((dataEntry, key) => {
     let card = document.createElement('div')
     card.classList.add('card')
     card.innerHTML = cardTemplate(dataEntry)
+    card.dataset['key'] = key
+    card.dataset['hash'] = dataEntry._id
     cardList.append(card)
 
     // Handle clicks on cards
     card.addEventListener('click', (event)=>{
       window.location.hash = dataEntry._id
+      document.body.style.overflow = 'hidden';
     })
   })
 
@@ -79,6 +143,41 @@ function renderCards (cardsData) {
   document.getElementById('cards').append(cardList)
 }
 
+window.addEventListener('keyup', event => {
+  if (!window.location.hash) return false
+
+  let cardList = (GLOBALS.activePhaseFilter !== 'All')? GLOBALS.filteredCards : GLOBALS.cards
+  let currentId = window.location.hash.substr(1)
+  let currentCard = document.querySelectorAll(`[data-hash='${currentId}']`)[0]
+  let currentKey = parseInt(currentCard.dataset['key'])
+  let previous, next
+
+  if (currentKey === 0) {
+    previous = cardList.length - 1
+    next = currentKey + 1
+  } else if (currentKey === cardList.length - 1) {
+    previous = currentKey - 1
+    next = 0
+  } else {
+    previous = currentKey - 1
+    next = currentKey + 1
+  }
+
+  for (let page of Object.entries(window.methodDetailsPages)){
+    page[1].hidden = true
+  }
+
+  switch (event.which) {
+    case 39:
+      window.location.hash = cardList[next]._id
+      // Next card
+      break
+    case 37:
+      window.location.hash = cardList[previous]._id
+      // Previous card
+      break
+  }
+})
 
 // ------------------
 
@@ -95,7 +194,7 @@ const cardDetailsPageTemplate = (props) => {
 
   // These elements are injected into a div.method-page in the renderDetailsPages() function
   return (`
-    <div class="method-page">
+    <div class="method-page-inner">
       <span>${props.phase}</span>
       <h1>${props.title}</h1>
       <p>${props.subtitle}</p>
@@ -106,6 +205,9 @@ const cardDetailsPageTemplate = (props) => {
       <div>
         <h2>How to use it</h2>
         ${instruction}
+      </div>
+      <div class="img-container">
+        <img src="${props.imageUrl}?h=500" class="card-image">
       </div>
     </div>
   `)
@@ -135,7 +237,7 @@ function renderDetailsPages (cardsData) {
 
 // When deselecting a page, ie clicking outside of the modal, hide the overlay
 document.getElementById('page-container').addEventListener('click', (e)=>{
-  
+  document.body.style.overflow = 'auto';
   if (e.path[0].id == 'page-container'){
     document.getElementById('page-container').hidden = true
 
@@ -151,7 +253,6 @@ document.getElementById('page-container').addEventListener('click', (e)=>{
 // Show the proper page when url changes (this is what makes tha modal appear)
 window.addEventListener('hashchange', ()=>{
   document.getElementById('page-container').hidden = false
-
   let pageId = window.location.hash.substring(1)
   window.methodDetailsPages[pageId].hidden = false
 })
