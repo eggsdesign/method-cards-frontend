@@ -36,7 +36,7 @@ function renderPageContent(cardsData) {
   renderFilter()
   renderCards(cardsData)
   renderDetailsPages(cardsData)
-  renderSavedProjectsDropdown(ProjectHandler.getGLOBALS().savedProjects)
+  renderSavedProjectsDropdown(ProjectHandler.getProjectsFromStorage())
   addSaveProjectButton()
   addClearProjectButton()
 }
@@ -62,7 +62,6 @@ function renderFavorites() {
   let addedCards = GLOBALS.cards.filter(card => {
     return favorites.includes(card._id)
   });
-  console.log(addedCards);
 
   // Remove elements from html
   while (projectElement.firstChild) {
@@ -211,12 +210,10 @@ const cardTemplate = (props) => {
   `)
 }
 
-
-// Function to handle card rendering
 function renderCards (cardsData) {
   // Generate a container element to collect generated cards
-  let cardList = document.createElement('div')
-  cardList.classList.add("cards-container")
+  let cardList = document.createElement('div');
+  cardList.classList.add("cards-container");
 
   // Step through all entries in the 'data' array, generate html-elements and append to cardList container element
   cardsData.map((dataEntry, key) => {

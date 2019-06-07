@@ -4,8 +4,15 @@ let GLOBALS = {
 }
 
 const ProjectHandler = {
-  test: () => {
-    console.log('O.K.')
+  saveProjects: (name) => {
+    let stringified = JSON.stringify(GLOBALS.savedProjects);
+    window.localStorage.setItem('method-cards-projects', stringified);
+  },
+
+  getProjectsFromStorage: () => {
+    let projects = window.localStorage.getItem('method-cards-projects')
+    GLOBALS.savedProjects = JSON.parse(projects);
+    return JSON.parse(projects)
   },
 
   getGLOBALS: () => {
@@ -22,11 +29,9 @@ const ProjectHandler = {
   },
 
   removeFavorite: (title, id) => {
-    console.log(GLOBALS.favorites)
     GLOBALS.favorites = GLOBALS.favorites.filter(item => {
       return item !== id
     });
-    console.log(GLOBALS.favorites)
     return `Removed ${title} from project`;
   },
 
@@ -37,6 +42,7 @@ const ProjectHandler = {
       cards: GLOBALS.favorites
     }
     GLOBALS.savedProjects.push(tmpObj);
+    ProjectHandler.saveProjects(tmpObj.name)
     return GLOBALS.savedProjects;
   },
 
@@ -57,6 +63,7 @@ const ProjectHandler = {
       return false
     }
     GLOBALS.favorites = result[0].cards;
+
     return true;
   },
 }
