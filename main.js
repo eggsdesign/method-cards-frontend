@@ -1,7 +1,6 @@
 import blocksToHtml from '@sanity/block-content-to-html'
-import { createInflateRaw } from 'zlib';
 const SANITY_PROJECT_ID = 'r1vilzq1'
-
+import ProjectHandler from './projects.js'
 
 // SERVER COMMUNICATION -------------------------------------------------------------
 
@@ -29,7 +28,7 @@ client
 let GLOBALS = {
   cards: [],
   phases: ['All'],
-  activePhaseFilter: 'All'
+  activePhaseFilter: 'All',
 }
 
 function renderPageContent(cardsData) {
@@ -37,6 +36,9 @@ function renderPageContent(cardsData) {
   renderFilter()
   renderCards(cardsData)
   renderDetailsPages(cardsData)
+  renderSavedProjectsDropdown(ProjectHandler.getGLOBALS().savedProjects)
+  addSaveProjectButton()
+  addClearProjectButton()
 }
 
 // END of SERVER COMMUNICATION ---------------------------------------------------------
@@ -52,37 +54,130 @@ function createGlobals(cardsData) {
   })
 }
 
-
-
-
-
 // PAGE RENDERING ----------------------------------------------------------------------
+function renderFavorites() {
+  let projectElement = document.getElementById('favorites')
+  // Get favoritted cards from all cards
+  let favorites = ProjectHandler.getGLOBALS().favorites;
+  let addedCards = GLOBALS.cards.filter(card => {
+    return favorites.includes(card._id)
+  });
+  console.log(addedCards);
+
+  // Remove elements from html
+  while (projectElement.firstChild) {
+    projectElement.removeChild(projectElement.firstChild);
+  }
+
+  // Create elements
+  addedCards.map(card => {
+    let item = document.createElement('li');
+    item.innerHTML = card.title;
+    item.dataset['id'] = card._id;
+    let itemRemove = document.createElement('i');
+    item.append(itemRemove);
+    itemRemove.innerHTML = "\u24b3";
+    itemRemove.addEventListener('click', () => {
+      ProjectHandler.removeFavorite(card.title, card._id);
+      renderFavorites()
+    });
+    projectElement.append(item);
+  });
+}
+
+function addSaveProjectButton() {
+  let button = document.getElementById('saveProject');
+  button.addEventListener('mousedown', () => {
+    let name = null
+    if (ProjectHandler.getGLOBALS().favorites.length > 0) {
+      name = prompt('Enter project name')
+    } else {
+      showUserMessage('No cards added to project', 'warning')
+      return
+    }
+    if (name !== null && name.length > 0) {
+      renderSavedProjectsDropdown(ProjectHandler.saveFavoritesAsProject(name))
+    } else {
+      showUserMessage('Project needs a name, try again', 'warning')
+    }
+  }, false)
+}
+
+function addClearProjectButton() {
+  let button = document.getElementById('clearProject');
+  button.addEventListener('mousedown', () => {
+    ProjectHandler.clearFavorites();
+    renderFavorites();
+  });
+}
+
+const projectTemplate = (props) => {
+  return (`
+    <option data-title="${props}">
+      ${props}
+    </option>
+  `)
+}
+
+function renderSavedProjectsDropdown(savedProjects) {
+  let container = document.getElementById('projects');
+
+  // Remove elements from html
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
+  let projectsSelect = document.createElement('select');
+  projectsSelect.classList.add('project-container');
+
+  let emptyOption = document.createElement('option');
+  emptyOption.classList.add('project-button')
+  emptyOption.innerHTML = projectTemplate('Projects')
+  projectsSelect.append(emptyOption)
+
+  savedProjects.map(project => {
+    let option = document.createElement('option');
+    option.classList.add('project-button')
+    option.setAttribute('value', project.name);
+    option.innerHTML = projectTemplate(project.name)
+    projectsSelect.append(option)
+  })
+
+  projectsSelect.addEventListener('change', loadProject)
+  document.getElementById('projects').append(projectsSelect)
+}
+
+function loadProject(event) {
+  if (ProjectHandler.loadProject(event.target.value)) {
+    renderFavorites();
+  }
+}
 
 const filterTemplate = (props) => {
   return (`
-    <button data-phase="${props}">
+    <option data-phase="${props}">
       ${props}
-    </button>
+    </option>
   `)
 }
 
 function renderFilter() {
-  let filter = document.createElement('div')
+  let filter = document.createElement('select')
   filter.classList.add('filter-container')
   GLOBALS.phases.map(phase => {
-    let button = document.createElement('div');
-    button.classList.add('filter-button')
-    button.innerHTML = filterTemplate(phase)
-    button.addEventListener('click', setPhaseFilter)
-    filter.append(button)
+    let option = document.createElement('option');
+    option.classList.add('filter-button')
+    option.setAttribute('value', phase);
+    option.innerHTML = filterTemplate(phase)
+    filter.append(option)
   })
+  filter.addEventListener('change', setPhaseFilter)
   document.getElementById('filter').append(filter)
 }
 
 function setPhaseFilter(event) {
-  if (event.target.dataset['phase'] === GLOBALS.activePhaseFilter) return
-
-  GLOBALS.activePhaseFilter = event.target.dataset['phase']
+  if (event.target.value === GLOBALS.activePhaseFilter) return
+  GLOBALS.activePhaseFilter = event.target.value
 
   // Remove cards before adding new
   var cardsContainer = document.getElementById('cards');
@@ -125,22 +220,54 @@ function renderCards (cardsData) {
 
   // Step through all entries in the 'data' array, generate html-elements and append to cardList container element
   cardsData.map((dataEntry, key) => {
-    let card = document.createElement('div')
-    card.classList.add('card')
-    card.innerHTML = cardTemplate(dataEntry)
-    card.dataset['key'] = key
-    card.dataset['hash'] = dataEntry._id
-    cardList.append(card)
+    let card = document.createElement('div');
+    card.classList.add('card');
+    card.innerHTML = cardTemplate(dataEntry);
+    card.dataset['key'] = key;
+    card.dataset['hash'] = dataEntry._id;
+
+    let favBtn = document.createElement('button');
+    favBtn.innerHTML = 'Add to project';
+    favBtn.dataset['id'] = dataEntry._id;
+    card.append(favBtn);
+
+    cardList.append(card);
 
     // Handle clicks on cards
-    card.addEventListener('click', (event)=>{
-      window.location.hash = dataEntry._id
+    card.addEventListener('click', (event) => {
+      window.location.hash = dataEntry._id;
       document.body.style.overflow = 'hidden';
-    })
+    });
+
+    favBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      let result = ProjectHandler.addAsFavorite(event.target.dataset['id']);
+      showUserMessage(result);
+      renderFavorites();
+    });
   })
 
   // Add card container cardList to an element in the page
   document.getElementById('cards').append(cardList)
+}
+
+// -- MESSAGES
+
+function showUserMessage(message, level) {
+  let container = document.getElementById('userMessage');
+  let colorClass = level || 'neutral';
+  container.classList.add('show');
+  container.classList.add(colorClass);
+
+  window.setTimeout(() => {
+    container.innerHTML = message;
+    window.setTimeout(() => {
+      container.classList.remove('show')
+      container.classList.remove(colorClass)
+      container.innerHTML = '';
+    }, 2000);
+  }, 300);
 }
 
 window.addEventListener('keyup', event => {
@@ -178,9 +305,6 @@ window.addEventListener('keyup', event => {
       break
   }
 })
-
-// ------------------
-
 
 // Card details pages
 const cardDetailsPageTemplate = (props) => {
