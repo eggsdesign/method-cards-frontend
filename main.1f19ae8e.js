@@ -2020,8 +2020,14 @@ var GLOBALS = {
   savedProjects: []
 };
 var ProjectHandler = {
-  test: function test() {
-    console.log('O.K.');
+  saveProjects: function saveProjects(name) {
+    var stringified = JSON.stringify(GLOBALS.savedProjects);
+    window.localStorage.setItem('method-cards-projects', stringified);
+  },
+  getProjectsFromStorage: function getProjectsFromStorage() {
+    var projects = window.localStorage.getItem('method-cards-projects');
+    GLOBALS.savedProjects = JSON.parse(projects);
+    return JSON.parse(projects);
   },
   getGLOBALS: function getGLOBALS() {
     return GLOBALS;
@@ -2035,11 +2041,9 @@ var ProjectHandler = {
     return 'Added card to project';
   },
   removeFavorite: function removeFavorite(title, id) {
-    console.log(GLOBALS.favorites);
     GLOBALS.favorites = GLOBALS.favorites.filter(function (item) {
       return item !== id;
     });
-    console.log(GLOBALS.favorites);
     return "Removed ".concat(title, " from project");
   },
   saveFavoritesAsProject: function saveFavoritesAsProject(projectName) {
@@ -2049,6 +2053,7 @@ var ProjectHandler = {
       cards: GLOBALS.favorites
     };
     GLOBALS.savedProjects.push(tmpObj);
+    ProjectHandler.saveProjects(tmpObj.name);
     return GLOBALS.savedProjects;
   },
   clearFavorites: function clearFavorites() {
@@ -2108,7 +2113,7 @@ function renderPageContent(cardsData) {
   renderFilter();
   renderCards(cardsData);
   renderDetailsPages(cardsData);
-  renderSavedProjectsDropdown(_projects.default.getGLOBALS().savedProjects);
+  renderSavedProjectsDropdown(_projects.default.getProjectsFromStorage());
   addSaveProjectButton();
   addClearProjectButton();
 } // END of SERVER COMMUNICATION ---------------------------------------------------------
@@ -2132,8 +2137,7 @@ function renderFavorites() {
 
   var addedCards = GLOBALS.cards.filter(function (card) {
     return favorites.includes(card._id);
-  });
-  console.log(addedCards); // Remove elements from html
+  }); // Remove elements from html
 
   while (projectElement.firstChild) {
     projectElement.removeChild(projectElement.firstChild);
@@ -2260,8 +2264,7 @@ function setPhaseFilter(event) {
 
 var cardTemplate = function cardTemplate(props) {
   return "\n    <div class=card-text>\n      <span class=\"card-phase\">".concat(props.phase, "</span>\n      <h2 class=\"card-title\">").concat(props.title, "</h2>\n      <p class=\"card-subtext\">").concat(props.subtitle, "</p>\n    </div>\n\n    <div class=\"img-container\">\n      <img src=\"").concat(props.imageUrl, "?h=500\" class=\"card-image\">\n    </div>\n  ");
-}; // Function to handle card rendering
-
+};
 
 function renderCards(cardsData) {
   // Generate a container element to collect generated cards
@@ -2431,7 +2434,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58811" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50903" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
