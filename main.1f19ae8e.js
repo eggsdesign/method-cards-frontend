@@ -2008,35 +2008,255 @@ blocksToHtml.h = h;
 
 module.exports = blocksToHtml;
 
-},{"@sanity/block-content-to-hyperscript":"node_modules/@sanity/block-content-to-hyperscript/lib/index.js"}],"main.js":[function(require,module,exports) {
+},{"@sanity/block-content-to-hyperscript":"node_modules/@sanity/block-content-to-hyperscript/lib/index.js"}],"projects.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var GLOBALS = {
+  favorites: [],
+  savedProjects: []
+};
+var ProjectHandler = {
+  test: function test() {
+    console.log('O.K.');
+  },
+  getGLOBALS: function getGLOBALS() {
+    return GLOBALS;
+  },
+  addAsFavorite: function addAsFavorite(id) {
+    if (GLOBALS.favorites.indexOf(id) >= 0) {
+      return 'Card already added to project';
+    }
+
+    GLOBALS.favorites.push(id);
+    return 'Added card to project';
+  },
+  removeFavorite: function removeFavorite(title, id) {
+    console.log(GLOBALS.favorites);
+    GLOBALS.favorites = GLOBALS.favorites.filter(function (item) {
+      return item !== id;
+    });
+    console.log(GLOBALS.favorites);
+    return "Removed ".concat(title, " from project");
+  },
+  saveFavoritesAsProject: function saveFavoritesAsProject(projectName) {
+    var tmpObj = {
+      _id: "0".concat(GLOBALS.savedProjects.length),
+      name: projectName,
+      cards: GLOBALS.favorites
+    };
+    GLOBALS.savedProjects.push(tmpObj);
+    return GLOBALS.savedProjects;
+  },
+  clearFavorites: function clearFavorites() {
+    GLOBALS.favorites = [];
+    return 'Cards cleared from working project';
+  },
+  deleteProject: function deleteProject() {// TODO
+  },
+  loadProject: function loadProject(title) {
+    var result = GLOBALS.savedProjects.filter(function (i) {
+      return i.name === title;
+    });
+
+    if (result.length <= 0) {
+      return false;
+    }
+
+    GLOBALS.favorites = result[0].cards;
+    return true;
+  }
+};
+var _default = ProjectHandler;
+exports.default = _default;
+},{}],"main.js":[function(require,module,exports) {
 "use strict";
 
 var _blockContentToHtml = _interopRequireDefault(require("@sanity/block-content-to-html"));
 
+var _projects = _interopRequireDefault(require("./projects.js"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var SANITY_PROJECT_ID = 'r1vilzq1'; // SERVER COMMUNICATION -------------------------------------------------------------
+var SANITY_PROJECT_ID = 'r1vilzq1';
+// SERVER COMMUNICATION -------------------------------------------------------------
 // Define the sanity communication module we call 'client'
-
 var client = window.SanityClient({
   projectId: SANITY_PROJECT_ID,
   dataset: 'production',
   useCdn: true
 }); // Fetch all documents of type method. "..." means get all content in the method object. The following stuff makes sure we also fetch referenced files to get the image urls
 
-var query = "*[_type==\"method\"]{\n  ..., \n  \"imageUrl\": image.asset->url, \n  \"phase\": phase->phaseTitle\n}";
+var query = "*[_type==\"method\"]{\n  ...,\n  \"imageUrl\": image.asset->url,\n  \"phase\": phase->phaseTitle\n}";
 client.fetch(query) // Talk to server: request data based on query
 .then(renderPageContent) // Send received data into renderCards function
 .catch(function () {
   console.log("Error!");
 }); // ...but if data fetch fails, do this
 
+var GLOBALS = {
+  cards: [],
+  phases: ['All'],
+  activePhaseFilter: 'All'
+};
+
 function renderPageContent(cardsData) {
+  createGlobals(cardsData);
+  renderFilter();
   renderCards(cardsData);
   renderDetailsPages(cardsData);
+  renderSavedProjectsDropdown(_projects.default.getGLOBALS().savedProjects);
+  addSaveProjectButton();
+  addClearProjectButton();
 } // END of SERVER COMMUNICATION ---------------------------------------------------------
-// PAGE RENDERING ----------------------------------------------------------------------
+// Some setup
 
+
+function createGlobals(cardsData) {
+  GLOBALS.cards = cardsData;
+  GLOBALS.cards.map(function (card) {
+    if (GLOBALS.phases.indexOf(card.phase) < 0) {
+      GLOBALS.phases.push(card.phase);
+    }
+  });
+} // PAGE RENDERING ----------------------------------------------------------------------
+
+
+function renderFavorites() {
+  var projectElement = document.getElementById('favorites'); // Get favoritted cards from all cards
+
+  var favorites = _projects.default.getGLOBALS().favorites;
+
+  var addedCards = GLOBALS.cards.filter(function (card) {
+    return favorites.includes(card._id);
+  });
+  console.log(addedCards); // Remove elements from html
+
+  while (projectElement.firstChild) {
+    projectElement.removeChild(projectElement.firstChild);
+  } // Create elements
+
+
+  addedCards.map(function (card) {
+    var item = document.createElement('li');
+    item.innerHTML = card.title;
+    item.dataset['id'] = card._id;
+    var itemRemove = document.createElement('i');
+    item.append(itemRemove);
+    itemRemove.innerHTML = "\u24B3";
+    itemRemove.addEventListener('click', function () {
+      _projects.default.removeFavorite(card.title, card._id);
+
+      renderFavorites();
+    });
+    projectElement.append(item);
+  });
+}
+
+function addSaveProjectButton() {
+  var button = document.getElementById('saveProject');
+  button.addEventListener('mousedown', function () {
+    var name = null;
+
+    if (_projects.default.getGLOBALS().favorites.length > 0) {
+      name = prompt('Enter project name');
+    } else {
+      showUserMessage('No cards added to project', 'warning');
+      return;
+    }
+
+    if (name !== null && name.length > 0) {
+      renderSavedProjectsDropdown(_projects.default.saveFavoritesAsProject(name));
+    } else {
+      showUserMessage('Project needs a name, try again', 'warning');
+    }
+  }, false);
+}
+
+function addClearProjectButton() {
+  var button = document.getElementById('clearProject');
+  button.addEventListener('mousedown', function () {
+    _projects.default.clearFavorites();
+
+    renderFavorites();
+  });
+}
+
+var projectTemplate = function projectTemplate(props) {
+  return "\n    <option data-title=\"".concat(props, "\">\n      ").concat(props, "\n    </option>\n  ");
+};
+
+function renderSavedProjectsDropdown(savedProjects) {
+  var container = document.getElementById('projects'); // Remove elements from html
+
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
+  var projectsSelect = document.createElement('select');
+  projectsSelect.classList.add('project-container');
+  var emptyOption = document.createElement('option');
+  emptyOption.classList.add('project-button');
+  emptyOption.innerHTML = projectTemplate('Projects');
+  projectsSelect.append(emptyOption);
+  savedProjects.map(function (project) {
+    var option = document.createElement('option');
+    option.classList.add('project-button');
+    option.setAttribute('value', project.name);
+    option.innerHTML = projectTemplate(project.name);
+    projectsSelect.append(option);
+  });
+  projectsSelect.addEventListener('change', loadProject);
+  document.getElementById('projects').append(projectsSelect);
+}
+
+function loadProject(event) {
+  if (_projects.default.loadProject(event.target.value)) {
+    renderFavorites();
+  }
+}
+
+var filterTemplate = function filterTemplate(props) {
+  return "\n    <option data-phase=\"".concat(props, "\">\n      ").concat(props, "\n    </option>\n  ");
+};
+
+function renderFilter() {
+  var filter = document.createElement('select');
+  filter.classList.add('filter-container');
+  GLOBALS.phases.map(function (phase) {
+    var option = document.createElement('option');
+    option.classList.add('filter-button');
+    option.setAttribute('value', phase);
+    option.innerHTML = filterTemplate(phase);
+    filter.append(option);
+  });
+  filter.addEventListener('change', setPhaseFilter);
+  document.getElementById('filter').append(filter);
+}
+
+function setPhaseFilter(event) {
+  if (event.target.value === GLOBALS.activePhaseFilter) return;
+  GLOBALS.activePhaseFilter = event.target.value; // Remove cards before adding new
+
+  var cardsContainer = document.getElementById('cards');
+
+  while (cardsContainer.firstChild) {
+    cardsContainer.removeChild(cardsContainer.firstChild);
+  }
+
+  if (GLOBALS.activePhaseFilter === 'All') {
+    renderCards(GLOBALS.cards);
+  } else {
+    var filteredCards = GLOBALS.cards.filter(function (card) {
+      return card.phase === GLOBALS.activePhaseFilter;
+    });
+    GLOBALS.filteredCards = filteredCards;
+    renderCards(GLOBALS.filteredCards);
+  }
+}
 
 var cardTemplate = function cardTemplate(props) {
   return "\n    <div class=card-text>\n      <span class=\"card-phase\">".concat(props.phase, "</span>\n      <h2 class=\"card-title\">").concat(props.title, "</h2>\n      <p class=\"card-subtext\">").concat(props.subtitle, "</p>\n    </div>\n\n    <div class=\"img-container\">\n      <img src=\"").concat(props.imageUrl, "?h=500\" class=\"card-image\">\n    </div>\n  ");
@@ -2048,21 +2268,90 @@ function renderCards(cardsData) {
   var cardList = document.createElement('div');
   cardList.classList.add("cards-container"); // Step through all entries in the 'data' array, generate html-elements and append to cardList container element
 
-  cardsData.map(function (dataEntry) {
+  cardsData.map(function (dataEntry, key) {
     var card = document.createElement('div');
     card.classList.add('card');
     card.innerHTML = cardTemplate(dataEntry);
+    card.dataset['key'] = key;
+    card.dataset['hash'] = dataEntry._id;
+    var favBtn = document.createElement('button');
+    favBtn.innerHTML = 'Add to project';
+    favBtn.dataset['id'] = dataEntry._id;
+    card.append(favBtn);
     cardList.append(card); // Handle clicks on cards
 
     card.addEventListener('click', function (event) {
       window.location.hash = dataEntry._id;
+      document.body.style.overflow = 'hidden';
+    });
+    favBtn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      var result = _projects.default.addAsFavorite(event.target.dataset['id']);
+
+      showUserMessage(result);
+      renderFavorites();
     });
   }); // Add card container cardList to an element in the page
 
   document.getElementById('cards').append(cardList);
-} // ------------------
-// Card details pages
+} // -- MESSAGES
 
+
+function showUserMessage(message, level) {
+  var container = document.getElementById('userMessage');
+  var colorClass = level || 'neutral';
+  container.classList.add('show');
+  container.classList.add(colorClass);
+  window.setTimeout(function () {
+    container.innerHTML = message;
+    window.setTimeout(function () {
+      container.classList.remove('show');
+      container.classList.remove(colorClass);
+      container.innerHTML = '';
+    }, 2000);
+  }, 300);
+}
+
+window.addEventListener('keyup', function (event) {
+  if (!window.location.hash) return false;
+  var cardList = GLOBALS.activePhaseFilter !== 'All' ? GLOBALS.filteredCards : GLOBALS.cards;
+  var currentId = window.location.hash.substr(1);
+  var currentCard = document.querySelectorAll("[data-hash='".concat(currentId, "']"))[0];
+  var currentKey = parseInt(currentCard.dataset['key']);
+  var previous, next;
+
+  if (currentKey === 0) {
+    previous = cardList.length - 1;
+    next = currentKey + 1;
+  } else if (currentKey === cardList.length - 1) {
+    previous = currentKey - 1;
+    next = 0;
+  } else {
+    previous = currentKey - 1;
+    next = currentKey + 1;
+  }
+
+  var _arr = Object.entries(window.methodDetailsPages);
+
+  for (var _i = 0; _i < _arr.length; _i++) {
+    var page = _arr[_i];
+    page[1].hidden = true;
+  }
+
+  switch (event.which) {
+    case 39:
+      window.location.hash = cardList[next]._id; // Next card
+
+      break;
+
+    case 37:
+      window.location.hash = cardList[previous]._id; // Previous card
+
+      break;
+  }
+}); // Card details pages
 
 var cardDetailsPageTemplate = function cardDetailsPageTemplate(props) {
   var description = (0, _blockContentToHtml.default)({
@@ -2072,7 +2361,7 @@ var cardDetailsPageTemplate = function cardDetailsPageTemplate(props) {
     blocks: props.instruction
   }); // These elements are injected into a div.method-page in the renderDetailsPages() function
 
-  return "\n    <div class=\"method-page\">\n      <span>".concat(props.phase, "</span>\n      <h1>").concat(props.title, "</h1>\n      <p>").concat(props.subtitle, "</p>\n      <div>\n        <h2>When to use it</h2>\n        ").concat(description, "\n      </div>\n      <div>\n        <h2>How to use it</h2>\n        ").concat(instruction, "\n      </div>\n    </div>\n  ");
+  return "\n    <div class=\"method-page-inner\">\n      <span>".concat(props.phase, "</span>\n      <h1>").concat(props.title, "</h1>\n      <p>").concat(props.subtitle, "</p>\n      <div>\n        <h2>When to use it</h2>\n        ").concat(description, "\n      </div>\n      <div>\n        <h2>How to use it</h2>\n        ").concat(instruction, "\n      </div>\n      <div class=\"img-container\">\n        <img src=\"").concat(props.imageUrl, "?h=500\" class=\"card-image\">\n      </div>\n    </div>\n  ");
 }; // Function to handle card rendering
 
 
@@ -2093,13 +2382,15 @@ function renderDetailsPages(cardsData) {
 
 
 document.getElementById('page-container').addEventListener('click', function (e) {
+  document.body.style.overflow = 'auto';
+
   if (e.path[0].id == 'page-container') {
     document.getElementById('page-container').hidden = true;
 
-    var _arr = Object.entries(window.methodDetailsPages);
+    var _arr2 = Object.entries(window.methodDetailsPages);
 
-    for (var _i = 0; _i < _arr.length; _i++) {
-      var page = _arr[_i];
+    for (var _i2 = 0; _i2 < _arr2.length; _i2++) {
+      var page = _arr2[_i2];
       page[1].hidden = true;
     }
 
@@ -2112,7 +2403,7 @@ window.addEventListener('hashchange', function () {
   var pageId = window.location.hash.substring(1);
   window.methodDetailsPages[pageId].hidden = false;
 }); // END of PAGE RENDERING -----------------------------------------------------------------
-},{"@sanity/block-content-to-html":"node_modules/@sanity/block-content-to-html/lib/blocksToHtml.js"}],"node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"@sanity/block-content-to-html":"node_modules/@sanity/block-content-to-html/lib/blocksToHtml.js","./projects.js":"projects.js"}],"node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -2140,7 +2431,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65153" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58811" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
